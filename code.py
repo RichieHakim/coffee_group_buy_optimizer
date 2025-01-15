@@ -389,12 +389,13 @@ def demo_total_demands_qol():
                 print(f"  {str(c)+':':<15} {qty} × {size:.3f} {units_size} @ {cost} {units_money}")
 
         print("\nAllocations:")
-        print(f"  __Name__   __Coffee__      __Amount__")
+        print(f"  __Name__   __Coffee__        __Alloc__    __Dev__")
         for (n, c), grams in sorted(sol["a_n_c"].items()):
-            if grams > 0:
-                dev = sol["dev_n_c"][(n, c)]
-                lb, ub, tgt = demands[(n, c)]
-                print(f"  {str(n)+',':<10} {str(c)+',':<15} Alloc: {grams:.3f} {units_size} ")
+            if (n, c) in demands:
+                if demands[(n, c)][2] > 0:
+                    dev = sol["dev_n_c"][(n, c)]
+                    lb, ub, tgt = demands[(n, c)]
+                    print(f"  {str(n)+',':<10} {str(c)+',':<17} {grams:.3f} {units_size},    {dev} {units_size}")
 
         print("\nTotal Deviations:")
         print(f"  __Name__   __Total__   __Deviance__")
