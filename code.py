@@ -17,7 +17,7 @@ def optimize_coffee_purchase_with_totals(
         - cost
         - normalized deviations (per coffee and overall)
 
-    Objective:
+    Objective:|
         MINIMIZE alpha * SUM( dev_{n,c}/UB_{n,c} + dev_total_n / UB_{n}^{total} )
                 + (1 - alpha) * SUM( cost_{c,k} * x_{c,k} )
 
@@ -359,27 +359,45 @@ def demo_total_demands_qol():
             total_demands=total_demands,
             alpha=alpha
         )
-        print(f"\n=== alpha={alpha} ===")
         print("Status:", sol["status"])
         print(f"Objective Value: {sol['objective_value']:.4f}")
         print(f"Sum of normalized deviations: {sol['sum_devs_normalized']:.4f}")
         print(f"Total Cost: {sol['total_cost']:.2f} {units_money}")
 
+        print("\n=== Inputs ===")
+        print("Coffee Packages:")
+        for name, options in coffee_packages.items():
+            print(f"{name+':':<17} {''.join([f'{option[0]:.2f} {units_size} for {option[1]:<6.2f} {units_money} @ {option[1] / option[0]:<6.2f} {units_money}/{units_size},    ' for option in options])}")
+
+        print("\nDemands:")
+        print(f"__Name__   __Coffee__           __(low, high, target) {units_size}__")
+        for (n, c), (lb, ub, tgt) in sorted(demands.items()):
+            print(f"{str(n)+',':<10} {str(c)+',':<20} ({lb}, {ub}, {tgt})")
+
+        print(f"\nTotal demands:")
+        print(f"__Name__   __(low, high, target) {units_size}__")
+        for n, (lbT, ubT, tgtT) in sorted(total_demands.items()):
+            print(f"{str(n)+',':<10} ({lbT}, {ubT}, {tgtT})")
+
+        print("\n=== Results ===")
+
         print("Packages Purchased:")
+        print(f"  __Coffee__      __Amount__")
         for (c, k), qty in sorted(sol["x_c_k"].items()):
             if qty > 0:
                 size, cost = coffee_packages[c][k]
-                print(f"  {str(c)+':':<15} {qty} × {size:.3f}kg @ {cost} {units_money}")
+                print(f"  {str(c)+':':<15} {qty} × {size:.3f} {units_size} @ {cost} {units_money}")
 
-        print("Allocations:")
+        print("\nAllocations:")
+        print(f"  __Name__   __Coffee__      __Amount__")
         for (n, c), grams in sorted(sol["a_n_c"].items()):
             if grams > 0:
                 dev = sol["dev_n_c"][(n, c)]
                 lb, ub, tgt = demands[(n, c)]
-                print(f"  {str(n)+',':<10} {str(c)+',':<15} Alloc: {grams:.3f} kg "
-                      f"Constraints: ({lb}, {ub}, {tgt}), dev: {dev}")
+                print(f"  {str(n)+',':<10} {str(c)+',':<15} Alloc: {grams:.3f} {units_size} ")
 
-        print("Total Deviations:")
+        print("\nTotal Deviations:")
+        print(f"  __Name__   __Total__   __Deviance__")
         for n in sorted(sol["dev_total_n"].keys()):
             devT = sol["dev_total_n"][n]
             lbT, ubT, tgtT = sol["dev_total_n"][n], 0, 0  # Initialize
@@ -390,8 +408,7 @@ def demo_total_demands_qol():
             # So we can iterate through total_demands again
             lbT, ubT, tgtT = total_demands[n]
             sum_alloc = sum(sol["a_n_c"].get((n, c), 0.0) for c in coffee_packages.keys())
-            print(f"  {str(n)+',':<10} TotalAlloc={sum_alloc:.3f} kg, DevTotal={devT:.3f} "
-                  f"Constraints: ({lbT}, {ubT}, {tgtT})")
+            print(f"  {str(n)+',':<10} {sum_alloc:.3f} {units_size},   {devT:.3f} {units_size} ")
 
 
 if __name__ == "__main__":
